@@ -19,7 +19,7 @@ flowers_train_split_path: '/export/mlrg/aelnouby/projects/GANs/flowers_dataset/f
 flowers_test_split_path: '/export/mlrg/aelnouby/projects/GANs/flowers_dataset/flowers_icml/testclasses.txt'
 
 #Youtubers dataset:
-youtubers_dataset_path: '/imatge/froldan/work/youtubers_videos_audios'
-youtubers_train_path: '/imatge/froldan/work/youtubers_videos_audios/train_faces.pkl'
-youtubers_val_path: '/imatge/froldan/work/youtubers_videos_audios/val_faces.pkl'
-youtubers_test_path: '/imatge/froldan/work/youtubers_videos_audios/test_faces.pkl'
+youtubers_dataset_path: ''
+youtubers_train_path: ''
+youtubers_val_path: ''
+youtubers_test_path: ''
