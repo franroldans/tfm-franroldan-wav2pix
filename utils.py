@@ -66,7 +66,7 @@ class Utils(object):
 
     @staticmethod
     # based on:  https://github.com/caogang/wgan-gp/blob/master/gan_cifar10.py
-    def compute_GP(netD, real_data, real_embed, fake_data, LAMBDA):
+    def compute_GP(netD, real_data, real_embed, fake_data, LAMBDA, project=False):
         #TODO: Should be improved!!!! Maybe using: https://github.com/EmilienDupont/wgan-gp/blob/master/training.py
         BATCH_SIZE = real_data.size(0)
         alpha = torch.rand(BATCH_SIZE, 1)
@@ -78,8 +78,7 @@ class Utils(object):
         interpolates = interpolates.cuda()
 
         interpolates = autograd.Variable(interpolates, requires_grad=True)
-
-        disc_interpolates, _ = netD(interpolates, real_embed)
+        disc_interpolates, _ = netD(interpolates, real_embed, project=project)
 
         gradients = autograd.grad(outputs=disc_interpolates, inputs=interpolates,
                                   grad_outputs=torch.ones(disc_interpolates.size()).cuda(),

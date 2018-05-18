@@ -12,7 +12,7 @@ import yaml
 
 class OneHot2YoutubersDataset(Dataset):
 
-    def __init__(self, dataset_path, transform=None, split=0):
+    def __init__(self, dataset_path, transform=None, split=None):
         with open('config.yaml', 'r') as f:
             config = yaml.load(f)
         self.transform = transform
@@ -24,8 +24,10 @@ class OneHot2YoutubersDataset(Dataset):
             self.faces = pickle.load(open(config['youtubers_train_path'], 'rb'))
         elif split == 1:
             self.faces = pickle.load(open(config['youtubers_val_path'], 'rb'))
-        else:
+        elif split == 2:
             self.faces = pickle.load(open(config['youtubers_test_path'], 'rb'))
+        else:
+            self.faces = pickle.load(open(config['youtubers_faces_path'], 'rb'))
 
     def __len__(self):
         return len(self.faces)
@@ -34,7 +36,7 @@ class OneHot2YoutubersDataset(Dataset):
         path = self.faces[idx]
         cropped_face = Image.open(path)
         youtuber = path.split('/')[5] #TODO: This is hardcoded, better change it!!!
-        onehot = self.youtubers.index(youtuber) #Add to categorical for onehot approaches TODO: Handle this issue!!!
+        onehot = self.youtubers.index(youtuber)
         sample = {'onehot': self.to_categorical(onehot), 'face': np.array(cropped_face)}
         if self.transform:
             sample = self.transform(sample)
@@ -73,7 +75,6 @@ class Rescale(object):
         #return {'onehot': torch.LongTensor([onehot]), 'face': torch.from_numpy(np.array(img)).float()}
         return {'onehot': torch.from_numpy(onehot).float(), 'face': torch.from_numpy(np.array(img)).float()}
 
-"""
 #Testing implementation:
 mydataset = OneHot2YoutubersDataset('/imatge/froldan/work/youtubers_videos_audios',
                                     transform=Rescale(64))
@@ -82,4 +83,4 @@ data_iterator = iter(dataloader)
 sample = next(data_iterator)
 images = sample['face']
 onehot = sample['onehot']
-print(images.shape)"""
+print(images.shape)

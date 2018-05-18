@@ -155,8 +155,9 @@ class Trainer(object):
 
                     ## NOTE: Pytorch had a bug with gradient penalty at the time of this project development
                     ##       , uncomment the next two lines and remove the params clamping below if you want to try gradient penalty
-                    # gp = Utils.compute_GP(self.discriminator, right_images.data, right_embed, fake_images.data, LAMBDA=10)
-                    # gp.backward()
+                    gp = Utils.compute_GP(self.discriminator, right_images.data, right_embed, fake_images.data, LAMBDA=10,
+                                          project=self.apply_projection)
+                    gp.backward()
 
                     d_loss = real_loss - fake_loss
 
@@ -177,8 +178,8 @@ class Trainer(object):
                 fake_images = self.generator(right_embed, noise, project=self.apply_projection)
                 outputs, _ = self.discriminator(fake_images, right_embed, project=self.apply_projection)
 
-                #g_loss = torch.mean(outputs)
-                g_loss = torch.sum((outputs)**2)
+                g_loss = torch.mean(outputs)
+                #g_loss = torch.sum((outputs)**2)
                 g_loss.backward(mone)
                 g_loss = - g_loss
                 self.optimG.step()
