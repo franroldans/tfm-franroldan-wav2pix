@@ -19,7 +19,7 @@ class Trainer(object):
 
         self.generator = gan_factory.generator_factory(type, dataset, batch_size, h, scale_size, num_channels).cuda()
         self.discriminator = gan_factory.discriminator_factory(type, batch_size, h, scale_size, num_channels).cuda()
-
+        print(self.discriminator)
         if pre_trained_disc:
             self.discriminator.load_state_dict(torch.load(pre_trained_disc))
         else:
@@ -87,6 +87,8 @@ class Trainer(object):
             self._train_vanilla_gan()
         elif self.type == 'began':
             self._train_began()
+        elif self.type =='acgan':
+            self._train_acgan()
 
     def _train_wgan(self, cls):
         print('Starting training for WGAN...')
@@ -135,7 +137,6 @@ class Trainer(object):
 
                         right_images = Variable(right_images.float()).cuda()
                         right_embed = Variable(right_embed.float()).cuda() #Change to long if using embedding layer.
-
                     outputs, _ = self.discriminator(right_images, right_embed, project=self.apply_projection)
                     real_loss = torch.mean(outputs)
                     real_loss.backward(mone)
@@ -288,6 +289,120 @@ class Trainer(object):
             if (epoch) % 10 == 0:
                 Utils.save_checkpoint(self.discriminator, self.generator, self.checkpoints_path, self.save_path, epoch)
 
+    def _train_acgan(self):
+        """ Based on https://github.com/gitlimlab/ACGAN-PyTorch"""
+
+        # Function to compute the current classification accuracy
+        def compute_acc(preds, labels):
+            correct = 0
+            preds_ = preds.data.max(1)[1]
+            correct = preds_.eq(labels.data).cpu().sum()
+            acc = float(correct) / float(len(labels.data)) * 100.0
+            return acc
+
+        avg_loss_D = 0.0
+        avg_loss_G = 0.0
+        avg_loss_A = 0.0
+        # loss functions
+        disc_criterion = nn.BCELoss()
+        aux_criterion = nn.NLLLoss()
+        iteration = 0
+        print('Starting training GAN with auxiliary classifier')
+        for epoch in range(self.num_epochs):
+            for sample in self.data_loader:
+                iteration += 1
+                if self.dataset_name != 'youtubers':
+
+                    right_images = sample['right_images']
+                    right_embed = sample['right_embed']
+                    wrong_images = sample['wrong_images']
+                    wrong_images = Variable(wrong_images.float()).cuda()
+                else:
+                    right_images = sample['face']
+                    right_embed_noextra = sample['onehot']
+                    fake_aux = torch.cat([torch.zeros(right_embed_noextra.size(1)), torch.ones(1)], 0)\
+                        .unsqueeze(1).permute(1, 0).repeat(right_embed_noextra.size(0), 1)
+                    right_embed = torch.cat([right_embed_noextra, torch.zeros(right_embed_noextra.size(0), 1)], 1)
+
+                right_images = Variable(right_images.float()).cuda()
+                right_embed = Variable(right_embed.float()).cuda()
+                real_labels = torch.ones(right_images.size(0))
+                fake_labels = torch.zeros(right_images.size(0))
+                right_embed_noextra = Variable(right_embed_noextra.float()).cuda()
+
+                # ======== One sided label smoothing ==========
+                # Helps preventing the discriminator from overpowering the
+                # generator adding penalty when the discriminator is too confident
+                # =============================================
+                smoothed_real_labels = torch.FloatTensor(Utils.smooth_label(real_labels.numpy(), -0.1))
+
+                real_labels = Variable(real_labels).cuda()
+                smoothed_real_labels = Variable(smoothed_real_labels).cuda()
+                fake_labels = Variable(fake_labels).cuda()
+
+                # Train the discriminator
+                self.discriminator.zero_grad()
+                outputs, aux_output = self.discriminator(right_images, right_embed, project=self.apply_projection)
+                _, targets = right_embed.max(dim=1)
+                targets = Variable(torch.LongTensor(targets.cpu()))
+                dis_errD_real = disc_criterion(outputs.squeeze(), real_labels).cuda()
+                aux_errD_real = aux_criterion(aux_output.cpu().float(), targets.cpu().long()).cuda()
+                errD_real = dis_errD_real + aux_errD_real
+                errD_real.backward(retain_graph=True)
+                D_x = outputs.data.mean()
+                # compute the current classification accuracy
+                accuracy = compute_acc(aux_output.cuda(), real_labels.cuda().long())
+                _, targets_fake = fake_aux.max(dim=1)
+                targets_fake = Variable(torch.LongTensor(targets_fake.cpu()))
+                noise = Variable(torch.randn(right_images.size(0), 100)).cuda()
+                noise = noise.view(noise.size(0), 100, 1, 1)
+                fake_images = self.generator(right_embed_noextra, noise, project=self.apply_projection)
+                outputs, _ = self.discriminator(fake_images, fake_aux, project=self.apply_projection)
+                dis_errD_fake = disc_criterion(outputs.squeeze(), fake_labels).cuda()
+                aux_errD_fake = aux_criterion(aux_output.cpu().float(), targets_fake.cpu().long()).cuda()
+                errD_fake = dis_errD_fake + aux_errD_fake
+                errD_fake.backward(retain_graph=True)
+                D_G_z1 = outputs.data.mean()
+                errD = errD_real + errD_fake
+                self.optimD.step()
+
+                ############################
+                # (2) Update G network: maximize log(D(G(z)))
+                ###########################
+                self.generator.zero_grad()
+                disc_output, aux_output = self.discriminator(fake_images, fake_aux, project=self.apply_projection)
+                dis_errG = disc_criterion(disc_output.squeeze(), real_labels).cuda()
+                aux_errG = aux_criterion(aux_output, targets.cuda().long()).cuda()
+                errG = dis_errG + aux_errG
+                errG.backward()
+                D_G_z2 = disc_output.data.mean()
+                self.optimG.step()
+
+                # compute the average loss
+                curr_iter = epoch * len(self.data_loader) + iteration
+                all_loss_G = avg_loss_G * curr_iter
+                all_loss_D = avg_loss_D * curr_iter
+                all_loss_A = avg_loss_A * curr_iter
+                all_loss_G += errG.data[0]
+                all_loss_D += errD.data[0]
+                all_loss_A += accuracy
+                avg_loss_G = all_loss_G / (curr_iter + 1)
+                avg_loss_D = all_loss_D / (curr_iter + 1)
+                avg_loss_A = all_loss_A / (curr_iter + 1)
+
+                print(
+                    '[%d/%d][%d/%d] Loss_D: %.4f (%.4f) Loss_G: %.4f (%.4f) D(x): %.4f D(G(z)): %.4f / %.4f Acc: %.4f (%.4f)'
+                    % (epoch, self.num_epochs, iteration, len(self.data_loader),
+                       errD.data[0], avg_loss_D, errG.data[0], avg_loss_G, D_x, D_G_z1, D_G_z2, accuracy, avg_loss_A))
+                
+                """if iteration % 5 == 0:
+                    self.logger.log_iteration_gan(epoch,d_loss, g_loss, errD_real, fake_score)
+                    #self.logger.draw(right_images, fake_images)"""
+
+            if (epoch) % 10 == 0:
+                Utils.save_checkpoint(self.discriminator, self.generator, self.checkpoints_path, self.save_path, epoch)
+
+
     def _train_vanilla_wgan(self):
         one = Variable(torch.FloatTensor([1])).cuda()
         mone = one * -1
@@ -437,6 +552,7 @@ class Trainer(object):
 
                 g_loss.backward()
                 self.optimG.step()
+
 
                 if iteration % 5 == 0:
                     self.logger.log_iteration_gan(epoch, d_loss, g_loss, real_score, fake_score)
