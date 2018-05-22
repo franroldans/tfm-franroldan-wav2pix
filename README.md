@@ -10,11 +10,10 @@ Image credits [1]
 ## Requirements
 
 - pytorch 
-- visdom
 - h5py
 - PIL
 - numpy
-
+- matplotlib
 This implementation currently only support running with GPUs.
 
 ## Implementation details
@@ -31,6 +30,8 @@ This implementation follows the Generative Adversarial Text-to-Image Synthesis p
 We used [Caltech-UCSD Birds 200](http://www.vision.caltech.edu/visipedia/CUB-200.html) and [Flowers](http://www.robots.ox.ac.uk/~vgg/data/flowers/102/) datasets, we converted each dataset (images, text embeddings) to hd5 format. 
 
 We used the [text embeddings](https://github.com/reedscot/icml2016) provided by the paper authors
+
+We used our own dataset of youtubers, which each sample consists on a quadruplet of (speech, cropped face image, bounding box, full frame).
 
 **To use this code you can either:**
 
