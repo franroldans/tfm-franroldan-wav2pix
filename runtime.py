@@ -14,13 +14,14 @@ parser.add_argument("--l2_coef", default=100, type=float)
 parser.add_argument("--diter", default=5, type=int)
 parser.add_argument("--cls", default=False, action='store_true')
 parser.add_argument("--project", default=False, action='store_true')
+parser.add_argument("--concat", default=False, action='store_true')
 parser.add_argument("--vis_screen", default='gan')
 parser.add_argument("--save_path", default='')
 parser.add_argument("--inference", default=False, action='store_true')
 parser.add_argument('--pre_trained_disc', default=None)
 parser.add_argument('--pre_trained_gen', default=None)
 parser.add_argument('--dataset', default='youtubers')
-parser.add_argument('--split', default=0, type=int)
+parser.add_argument('--split', default=None, type=int)
 parser.add_argument('--batch_size', default=64, type=int)
 parser.add_argument('--num_workers', default=8, type=int)
 parser.add_argument('--epochs', default=200, type=int)
@@ -56,6 +57,7 @@ trainer = Trainer(type=args.type,
                   lambda_k=args.lambda_k,
                   gamma=args.gamma,
                   project=args.project,
+                  concat=args.concat,
                   )
 
 if not args.inference:

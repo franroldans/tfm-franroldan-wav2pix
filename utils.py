@@ -24,9 +24,11 @@ class Concat_embed(nn.Module):
                 nn.LeakyReLU(negative_slope=0.2, inplace=True)
             )
 
-    def forward(self, inp, embed):
-        projected_embed = self.projection(embed)
-        replicated_embed = projected_embed.repeat(4, 4, 1, 1).permute(2, 3, 0, 1)
+    def forward(self, inp, projected_embed):
+        #projected_embed = self.projection(embed)
+
+        replicated_embed = projected_embed.repeat(1, 1, 4, 4)#.permute(2, 3, 0, 1)
+        #print(inp)
         hidden_concat = torch.cat([inp, replicated_embed], 1)
 
         return hidden_concat
@@ -100,10 +102,8 @@ class Utils(object):
     @staticmethod
     def weights_init(m):
         classname = m.__class__.__name__
-        """if isinstance(m, nn.Conv2d):
-            nn.init.xavier_normal(m.weight.data)
-        elif classname.find('Conv') != -1:
-            m.weight.data.normal_(0.0, 0.02)"""
+        if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
+            m.weight.data.normal_(0.0, 0.02)
         if classname.find('BatchNorm') != -1:
             m.weight.data.normal_(1.0, 0.02)
             m.bias.data.fill_(0)
