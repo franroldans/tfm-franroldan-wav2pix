@@ -1,11 +1,10 @@
-# Text-to-Image-Synthesis 
-Based on https://github.com/aelnouby/Text-to-Image-Synthesis
+# Speech2Face
 ## Intoduction
 
-This is a pytorch implementation of [Generative Adversarial Text-to-Image Synthesis paper](https://arxiv.org/abs/1605.05396), we train a conditional generative adversarial network, conditioned on text descriptions, to generate images that correspond to the description. The network architecture is shown below (Image from [1]). This architecture is based on DCGAN.
+Image synthesis has been a trending task for the AI community in recent years. Many works have shown the potential of Generative Adversarial Networks (GANs) to deal with tasks such as text or audio to image synthesis. In particular, recent advances in deep learning using audio have inspired many works involving both visual and auditory information. In this work we propose a face synthesis method which is trained end-to-end using audio and/or language representations as inputs. We used [this](https://github.com/aelnouby/Text-to-Image-Synthesis) project as baseline.
 
-<figure><img src='images/pipeline.png'></figure>
-Image credits [1]
+<figure><img src='images/a2i.png'></figure>
+
 
 ## Requirements
 
@@ -16,41 +15,7 @@ Image credits [1]
 - matplotlib
 This implementation currently only support running with GPUs.
 
-## Implementation details
 
-This implementation follows the Generative Adversarial Text-to-Image Synthesis paper [1], however it works more on training stablization and preventing mode collapses by implementing:
-- Feature matching [2]
-- One sided label smoothing [2]
-- minibatch discrimination [2] (implemented but not used)
-- WGAN [3]
-- WGAN-GP [4] (implemented but not used)
-
-## Datasets
-
-We used [Caltech-UCSD Birds 200](http://www.vision.caltech.edu/visipedia/CUB-200.html) and [Flowers](http://www.robots.ox.ac.uk/~vgg/data/flowers/102/) datasets, we converted each dataset (images, text embeddings) to hd5 format. 
-
-We used the [text embeddings](https://github.com/reedscot/icml2016) provided by the paper authors
-
-We used our own dataset of youtubers, which each sample consists on a quadruplet of (speech, cropped face image, bounding box, full frame).
-
-**To use this code you can either:**
-
-- Use the converted hd5 datasets,  [birds](https://drive.google.com/open?id=1mNhn6MYpBb-JwE86GC1kk0VJsYj-Pn5j), [flowers](https://drive.google.com/open?id=1EgnaTrlHGaqK5CCgHKLclZMT_AMSTyh8)
-- Convert the data youself
-  1. download the dataset as described [here](https://github.com/reedscot/cvpr2016)
-  2. Add the paths to the dataset to `config.yaml` file.
-  3. Use [convert_cub_to_hd5_script](convert_cub_to_hd5_script.py) or [convert_flowers_to_hd5_script](convert_flowers_to_hd5_script.py) script to convert the dataset.
-  
-**Hd5 file taxonomy**
-`
- - split (train | valid | test )
-    - example_name
-      - 'name'
-      - 'img'
-      - 'embeddings'
-      - 'class'
-      - 'txt'
-      
 ## Usage
 ### Training
 
@@ -74,24 +39,6 @@ We used our own dataset of youtubers, which each sample consists on a quadruplet
 - `cls`: Boolean flag to whether train with cls algorithms or not. default=`False`
 
 
-## Results
-
-### Generated Images
-
-<p align='center'>
-<img src='images/64_flowers.jpeg'>
-</p>
-
-## Text to image synthesis
-| Text        | Generated Images  |
-| ------------- | -----:|
-| A blood colored pistil collects together with a group of long yellow stamens around the outside        | <img src='images/examples/a blood colored pistil collects together with a group of long yellow stamens around the outside whic.jpg'>  |
-| The petals of the flower are narrow and extremely pointy, and consist of shades of yellow, blue      | <img src='images/examples/the petals of the flower are narrow and extremely pointy, and consist of shades of yellow, blue and .jpg'>  |
-| This pale peach flower has a double row of long thin petals with a large brown center and coarse loo | <img src='images/examples/this pale peach flower has a double row of long thin petals with a large brown center and coarse loo.jpg'> |
-| The flower is pink with petals that are soft, and separately arranged around the stamens that has pi | <img src='images/examples/the flower is pink with petals that are soft, and separately arranged around the stamens that has pi.jpg'> |
-| A one petal flower that is white with a cluster of yellow anther filaments in the center | <img src='images/examples/a one petal flower that is white with a cluster of yellow anther filaments in the center.jpg'> |
-
-
 ## References
 [1]  Generative Adversarial Text-to-Image Synthesis https://arxiv.org/abs/1605.05396
 
@@ -101,8 +48,3 @@ We used our own dataset of youtubers, which each sample consists on a quadruplet
 
 [4] Improved Training of Wasserstein GANs https://arxiv.org/pdf/1704.00028.pdf
 
-
-## Other Implementations
-
-1. https://github.com/reedscot/icml2016 (the authors version)
-2. https://github.com/paarthneekhara/text-to-image (tensorflow)
