@@ -1,4 +1,4 @@
-from models import gan, gan_cls, wgan_cls, wgan, began, acgan
+from models import gan, gan_cls, wgan_cls, wgan, began, acgan, segan
 
 class gan_factory(object):
 
@@ -15,7 +15,10 @@ class gan_factory(object):
         elif type == 'began':
             return began.Decoder(b_size, h, scale_size, num_channels)
         elif type == 'acgan':
-            return acgan.generator()
+            return segan.generator()
+            #return acgan.generator()
+        elif type == 'segan':
+            return segan.generator()
 
     @staticmethod
     def discriminator_factory(type, b_size, h, scale_size, num_channels):
@@ -31,3 +34,5 @@ class gan_factory(object):
             return began.Discriminator(b_size, h, scale_size, num_channels)
         elif type == 'acgan':
             return acgan.discriminator()
+        elif type == 'segan':
+            return gan_cls.discriminator()

@@ -96,17 +96,6 @@ class discriminator(nn.Module):
 		x = nn.LeakyReLU(0.2, inplace=True)(self.conv2(x))
 		x = nn.LeakyReLU(0.2, inplace=True)(self.conv3(x))
 		x_intermediate = nn.LeakyReLU(0.2, inplace=True)(self.conv4(x))
-
-		"""if self.dataset_name == 'youtubers' and not project:
-			if concat:
-				padding = Variable(
-					torch.cuda.FloatTensor(embed.data.shape[0], 64 - embed.data.shape[1]).fill_(0).float()).cuda()
-				embed_vector = torch.cat([embed, padding], 1).unsqueeze(2).unsqueeze(3).repeat(1, 1, 4, 4)
-				x = torch.cat([x_intermediate, embed_vector], 1)
-			else:
-				x = x_intermediate
-		else:
-			x = self.projector(x_intermediate, embed)"""
 		x2 = self.netD_2(x_intermediate)
 		x = x2.view(-1, x2.data.shape[0])
 		xc = x_intermediate.view(-1, 4*4*512)
@@ -115,7 +104,8 @@ class discriminator(nn.Module):
 		if x2.data.shape[0] == 64:
 			s = self.disc_linear(x)
 		else:
-			s = self.disc_linear2(x)
-		s = self.sigmoid(s)
-		return s, c
+			s = nn.Linear(x2.data.shape[0] * 1, x2.data.shape[0] * 1).cuda()(x)
+
+		#s = self.sigmoid(s)
+		return s, c, x_intermediate
 
