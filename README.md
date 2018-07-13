@@ -13,6 +13,7 @@ Image synthesis has been a trending task for the AI community in recent years. M
 - PIL
 - numpy
 - matplotlib
+
 This implementation currently only support running with GPUs.
 
 
