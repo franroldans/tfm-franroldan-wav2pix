@@ -1,6 +1,8 @@
 # Speech2Face
 ## Intoduction
 
+Note: This repo is no longer maintained. To obtain a more updated code, please visit [this](https://imatge-upc.github.io/wav2pix/) link.
+
 Image synthesis has been a trending task for the AI community in recent years. Many works have shown the potential of Generative Adversarial Networks (GANs) to deal with tasks such as text or audio to image synthesis. In particular, recent advances in deep learning using audio have inspired many works involving both visual and auditory information. In this work we propose a face synthesis method which is trained end-to-end using audio and/or language representations as inputs. We used [this](https://github.com/aelnouby/Text-to-Image-Synthesis) project as baseline.
 
 <figure><img src='images/a2i.png'></figure>
